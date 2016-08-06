@@ -24,7 +24,12 @@ namespace DueuesQuiz
 
             foreach (char[,] searchMatrix in inputReader.SearchMatrix)
             {
-                //int wordMatches = trie.Match(word);
+                Dictionary<string, int> matchs = trie.Match(searchMatrix);
+
+                foreach (KeyValuePair<string, int> match in matchs)
+                {
+                    Console.WriteLine($"{match.Key} - {match.Value}");
+                }
 
                 //Console.WriteLine($"{word} - {wordMatches}");
             }
@@ -177,6 +182,11 @@ namespace DueuesQuiz
             return Children.Any(child => child.Key == childValue);
         }
 
+        public TrieNode GetChild(char childValue)
+        {
+            return Children.FirstOrDefault(child => child.Key == childValue);
+        }
+
         public List<TrieNode> GetChildren(char childValue)
         {
             return Children.Where(child => child.Key == childValue).ToList();
@@ -234,22 +244,7 @@ namespace DueuesQuiz
 
         public void PopulateFromArray(char[] array)
         {
-            /*TrieNode rootNode;
-
-            if (RootNode.Children.Any(node => node.Key == array[0]))
-                rootNode = RootNode.Children.Single(node => node.Key == array[0]);
-            else
-            {
-                rootNode = new TrieNode(array[0], null);
-                RootNode.Children.Add(rootNode);
-            }*/
-
             ReadNode(0, array, RootNode);
-
-            /*for (int i = 1; i < array.Length; i++)
-            {
-                ReadNode(i, array, rootNode);
-            }*/
         }
 
         public void PopulateFromMatrix(char[,] matrix)
@@ -314,6 +309,58 @@ namespace DueuesQuiz
             char wChar = word.ToCharArray()[0];
 
             return RootNode.Children.Where(rnode => rnode.Key == wChar).Sum(node => node.Match(word));
+        }
+
+        public int Match(char[] word)
+        {
+            char wChar = word[0];
+
+            return RootNode.Children.Where(rnode => rnode.Key == wChar).Sum(node => node.Match(word));
+        }
+        
+        public Dictionary<string, int> Match(char[,] searchMatrix)
+        {
+            Dictionary<string, int> result = new Dictionary<string, int>();
+
+            for (int i = 0; i < searchMatrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < searchMatrix.GetLength(1); j++)
+                {
+                    foreach (int[] iterator in _interactionOptions)
+                    {
+                        string match = ReadAndMatch(i, j, iterator, new List<char>(), searchMatrix);
+
+                        if(!string.IsNullOrEmpty(match))
+                            if (result.ContainsKey(match))
+                                result[match]++;
+                            else
+                                result.Add(match, 1);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public string ReadAndMatch(int i, int j, int[] iterator, List<char> currentPrefix, char[,] searchMatrix, TrieNode parentNode = null)
+        {
+            TrieNode parent = parentNode ?? RootNode;
+            if (i >= 0 && j >= 0 && i < searchMatrix.GetLength(0) && j < searchMatrix.GetLength(1))
+            {
+                if (parent.HasChild(searchMatrix[i, j]))
+                {
+                    TrieNode node = parent.GetChild(searchMatrix[i, j]);
+                    currentPrefix.Add(searchMatrix[i, j]);
+
+                    // Match
+                    if (!string.IsNullOrEmpty(node?.Value) && node.Value == new string(currentPrefix.ToArray()))
+                        return node.Value;
+                    
+                    //Not a Match - keep looking
+                    return ReadAndMatch(i + iterator[0], j + iterator[1], iterator, currentPrefix, searchMatrix, node);
+                }
+            }
+            return string.Empty;
         }
     }
 }
