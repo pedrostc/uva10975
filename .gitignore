@@ -42,7 +42,10 @@ dlldata.c
 
 # DNX
 project.lock.json
+<<<<<<< HEAD
 project.fragment.lock.json
+=======
+>>>>>>> ce22768ca22d82f352d61cde63c68ae53cdb375f
 artifacts/
 
 *_i.c
@@ -250,4 +253,8 @@ paket-files/
 
 # JetBrains Rider
 .idea/
+<<<<<<< HEAD
 *.sln.iml
+=======
+*.sln.iml
+>>>>>>> ce22768ca22d82f352d61cde63c68ae53cdb375f
