@@ -3,87 +3,46 @@
 ## Test Case Samples
 
 >3
->
 >4
->
 >hello
->
 >bye
->
 >one
->
 >two
->
 >2
->
 >3 3
->
 >bye
->
 >okk
->
 >res
->
 >3 3
->
 >one
->
 >wzq
->
 >too
->
 >5
->
 >madam
->
 >egg
->
 >hello
->
 >e
->
 >ll
->
 >1
->
 >6 8
->
 >xhellohx
->
 >xoezxecx
->
 >xlnllbvx
->
 >xlmllasx
->
 >xeggfodx
->
 >xhmadamx
->
 >4
->
 >b
->
 >by
->
 >bye
->
 >byte
->
 >1
->
 >6 10
->
 >lllllbyte
->
 >llllbytel
->
 >lllbytell
->
 >llbytelll
->
 >lbytellll
->
 >bytelllll
 
 
