@@ -10,21 +10,23 @@ namespace DueuesQuiz
 {
     public class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             InputReader inputReader = new InputReader();
             inputReader.ReadInput();
 
+            Trie trie = new Trie();
+
+            foreach (string word in inputReader.Dictionary)
+            {
+                trie.PopulateFromArray(word.ToCharArray());
+            }
+
             foreach (char[,] searchMatrix in inputReader.SearchMatrix)
             {
-                Trie trie = new Trie(searchMatrix);
+                //int wordMatches = trie.Match(word);
 
-                foreach (string word in inputReader.Dictionary)
-                {
-                    int wordMatches = trie.Match(word);
-
-                    Console.WriteLine($"{word} - {wordMatches}");
-                }
+                //Console.WriteLine($"{word} - {wordMatches}");
             }
 
             Console.ReadKey();
@@ -148,16 +150,21 @@ namespace DueuesQuiz
 
     class TrieNode
     {
-        public char Value { get; }
+        public string Value { get; set; }
+        public char Key { get; }
         public TrieNode Parent { get; private set; }
         public List<TrieNode> Children { get; }
 
-        public TrieNode(char value, TrieNode parent)
+        public TrieNode()
+        {
+            Children = new List<TrieNode>();
+        }
+
+        public TrieNode(char key, TrieNode parent = null, string value = "") : this()
         {
             Parent = parent;
+            Key = key;
             Value = value;
-
-            Children = new List<TrieNode>();
         }
 
         public void AddChild(TrieNode child)
@@ -167,12 +174,12 @@ namespace DueuesQuiz
 
         public bool HasChild(char childValue)
         {
-            return Children.Any(child => child.Value == childValue);
+            return Children.Any(child => child.Key == childValue);
         }
 
         public List<TrieNode> GetChildren(char childValue)
         {
-            return Children.Where(child => child.Value == childValue).ToList();
+            return Children.Where(child => child.Key == childValue).ToList();
         }
 
         public int Match(string word)
@@ -183,11 +190,11 @@ namespace DueuesQuiz
         public int Match(char[] word)
         {
             // Not a match
-            if (Value != word[0])
+            if (Key != word[0])
                 return 0;
 
             // Last char of the word, so it's a match
-            if (word.Length == 1 && Value == word[0])
+            if (word.Length == 1 && Key == word[0])
                 return 1;
 
             if (word.Length > 1 && HasChild(word[1]))
@@ -203,7 +210,7 @@ namespace DueuesQuiz
 
     class Trie
     {
-        private readonly int[][] _interactionOptions = new int[8][]
+        private readonly int[][] _interactionOptions =
         {
             // Foward interation
             new[] {0, 1}, new[] {1, 0}, new[] {1, 1},
@@ -213,16 +220,36 @@ namespace DueuesQuiz
             new[] {1, -1}, new[] {-1, 1}
         };
 
-        public List<TrieNode> RootNodes { get; }
+        public TrieNode RootNode { get; }
 
         public Trie()
         {
-            RootNodes = new List<TrieNode>();
+            RootNode = new TrieNode();
         }
 
         public Trie(char[,] matrix) : this()
         {
             PopulateFromMatrix(matrix);
+        }
+
+        public void PopulateFromArray(char[] array)
+        {
+            /*TrieNode rootNode;
+
+            if (RootNode.Children.Any(node => node.Key == array[0]))
+                rootNode = RootNode.Children.Single(node => node.Key == array[0]);
+            else
+            {
+                rootNode = new TrieNode(array[0], null);
+                RootNode.Children.Add(rootNode);
+            }*/
+
+            ReadNode(0, array, RootNode);
+
+            /*for (int i = 1; i < array.Length; i++)
+            {
+                ReadNode(i, array, rootNode);
+            }*/
         }
 
         public void PopulateFromMatrix(char[,] matrix)
@@ -239,8 +266,31 @@ namespace DueuesQuiz
                     {
                         ReadNode(i + iterator[0], j + iterator[1], matrix, iterator, node);
                     }
-                    RootNodes.Add(node);
+                    RootNode.Children.Add(node);
                 }
+            }
+        }
+
+        public void ReadNode(int i, char[] array, TrieNode parentNode)
+        {
+            if (i >= 0 && i < array.Length)
+            {
+                TrieNode node = null;
+
+                if (parentNode.Children.Any(nd => nd.Key == array[i]))
+                    node = parentNode.Children.Single(nd => nd.Key == array[i]);
+                else
+                {
+                    node = new TrieNode(array[i], parentNode);
+                    parentNode.AddChild(node);
+                }
+
+                int navRow = i + 1;
+
+                if(navRow == array.Length)
+                    node.Value = new string(array);
+
+                ReadNode(navRow, array, node);
             }
         }
 
@@ -263,7 +313,7 @@ namespace DueuesQuiz
         {
             char wChar = word.ToCharArray()[0];
 
-            return RootNodes.Where(rnode => rnode.Value == wChar).Sum(node => node.Match(word));
+            return RootNode.Children.Where(rnode => rnode.Key == wChar).Sum(node => node.Match(word));
         }
     }
 }
