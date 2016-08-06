@@ -358,13 +358,16 @@ namespace DueuesQuiz
                 {
                     foreach (int[] iterator in _interactionOptions)
                     {
-                        string match = ReadAndMatch(i, j, iterator, new List<char>(), searchMatrix);
+                        List<string> matchs = ReadAndMatch(i, j, iterator, new List<char>(), searchMatrix);
 
-                        if (!string.IsNullOrEmpty(match))
-                            if (result.ContainsKey(match))
-                                result[match]++;
-                            else
-                                result.Add(match, 1);
+                        foreach (string match in matchs)
+                        {
+                            if (!string.IsNullOrEmpty(match))
+                                if (result.ContainsKey(match))
+                                    result[match]++;
+                                else
+                                    result.Add(match, 1);
+                        }
                     }
                 }
             }
@@ -372,8 +375,10 @@ namespace DueuesQuiz
             return result;
         }
 
-        public string ReadAndMatch(int i, int j, int[] iterator, List<char> currentPrefix, char[,] searchMatrix, TrieNode parentNode = null)
+        public List<string> ReadAndMatch(int i, int j, int[] iterator, List<char> currentPrefix, char[,] searchMatrix, TrieNode parentNode = null)
         {
+            List<string> result = new List<string>();
+
             TrieNode parent = parentNode ?? RootNode;
             if (i >= 0 && j >= 0 && i < searchMatrix.GetLength(0) && j < searchMatrix.GetLength(1))
             {
@@ -382,15 +387,13 @@ namespace DueuesQuiz
                     TrieNode node = parent.GetChild(searchMatrix[i, j]);
                     currentPrefix.Add(searchMatrix[i, j]);
 
-                    // Match
                     if (!string.IsNullOrEmpty(node?.Value) && node.Value == new string(currentPrefix.ToArray()))
-                        return node.Value;
+                        result.Add(node.Value);
 
-                    //Not a Match - keep looking
-                    return ReadAndMatch(i + iterator[0], j + iterator[1], iterator, currentPrefix, searchMatrix, node);
+                        result.AddRange(ReadAndMatch(i + iterator[0], j + iterator[1], iterator, currentPrefix, searchMatrix, node));
                 }
             }
-            return string.Empty;
+            return result;
         }
     }
 }
