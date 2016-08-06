@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Xml.XPath;
-using DueuesQuiz;
 // ReSharper disable SuggestVarOrType_BuiltInTypes
 
 namespace DueuesQuiz
@@ -222,11 +219,6 @@ namespace DueuesQuiz
             return Children.Where(child => child.Key == childValue).ToList();
         }
 
-        public int Match(string word)
-        {
-            return Match(word.ToCharArray());
-        }
-
         public int Match(char[] word)
         {
             // Not a match
@@ -267,40 +259,16 @@ namespace DueuesQuiz
             RootNode = new TrieNode();
         }
 
-        public Trie(char[,] matrix) : this()
-        {
-            PopulateFromMatrix(matrix);
-        }
-
         public void PopulateFromArray(char[] array)
         {
             ReadNode(0, array, RootNode);
-        }
-
-        public void PopulateFromMatrix(char[,] matrix)
-        {
-            int rowCount = matrix.GetLength(0);
-            int colCount = matrix.GetLength(1);
-
-            for (int i = 0; i < rowCount; i++)
-            {
-                for (int j = 0; j < colCount; j++)
-                {
-                    TrieNode node = new TrieNode(matrix[i, j], null);
-                    foreach (int[] iterator in _interactionOptions)
-                    {
-                        ReadNode(i + iterator[0], j + iterator[1], matrix, iterator, node);
-                    }
-                    RootNode.Children.Add(node);
-                }
-            }
         }
 
         public void ReadNode(int i, char[] array, TrieNode parentNode)
         {
             if (i >= 0 && i < array.Length)
             {
-                TrieNode node = null;
+                TrieNode node;
 
                 if (parentNode.Children.Any(nd => nd.Key == array[i]))
                     node = parentNode.Children.Single(nd => nd.Key == array[i]);
@@ -332,20 +300,6 @@ namespace DueuesQuiz
 
                 ReadNode(navRow, navCol, matrix, iterator, node);
             }
-        }
-
-        public int Match(string word)
-        {
-            char wChar = word.ToCharArray()[0];
-
-            return RootNode.Children.Where(rnode => rnode.Key == wChar).Sum(node => node.Match(word));
-        }
-
-        public int Match(char[] word)
-        {
-            char wChar = word[0];
-
-            return RootNode.Children.Where(rnode => rnode.Key == wChar).Sum(node => node.Match(word));
         }
 
         public Dictionary<string, int> Match(char[,] searchMatrix)
