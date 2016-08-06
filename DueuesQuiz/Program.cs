@@ -15,23 +15,33 @@ namespace DueuesQuiz
             InputReader inputReader = new InputReader();
             inputReader.ReadInput();
 
-            Trie trie = new Trie();
+            Console.WriteLine("");
 
-            foreach (string word in inputReader.Dictionary)
+            for (int i = 0; i < inputReader.T; i++)
             {
-                trie.PopulateFromArray(word.ToCharArray());
-            }
+                Trie trie = new Trie();
 
-            foreach (char[,] searchMatrix in inputReader.SearchMatrix)
-            {
-                Dictionary<string, int> matchs = trie.Match(searchMatrix);
-
-                foreach (KeyValuePair<string, int> match in matchs)
+                foreach (string word in inputReader.Dictionary[i])
                 {
-                    Console.WriteLine($"{match.Key} - {match.Value}");
+                    trie.PopulateFromArray(word.ToCharArray());
                 }
 
-                //Console.WriteLine($"{word} - {wordMatches}");
+                Console.WriteLine($"Test Case #{i + 1}");
+
+                for (int iM = 0; iM < inputReader.SearchMatrix[i].Count; iM++)
+                {
+                    Dictionary<string, int> matchs = trie.Match(inputReader.SearchMatrix[i][iM]);
+
+                    Console.WriteLine($"Query #{iM + 1}");
+
+                    foreach (KeyValuePair<string, int> match in matchs)
+                    {
+                        Console.WriteLine($"{match.Key} {match.Value}");
+                    }
+                }
+
+                Console.WriteLine("");
+                
             }
 
             Console.ReadKey();
@@ -41,28 +51,32 @@ namespace DueuesQuiz
     class InputReader
     {
         public int T { get; private set; }
-        public int D { get; private set; }
-        public List<string> Dictionary { get; private set; }
+        public List<int> D { get; private set; }
+        public List<HashSet<string>> Dictionary { get; }
         public int Q { get; set; }
-        public List<int> M { get; set; }
-        public List<int> N { get; set; }
-        public List<char[,]> SearchMatrix { get; private set; }
+        public List<List<int>> M { get; set; }
+        public List<List<int>> N { get; set; }
+        public List<List<char[,]>> SearchMatrix { get; }
 
         public InputReader()
         {
-            Dictionary = new List<string>();
-            SearchMatrix = new List<char[,]>();
-            M = new List<int>();
-            N = new List<int>();
+            Dictionary = new List<HashSet<string>>();
+            SearchMatrix = new List<List<char[,]>>();
+            D = new List<int>();
+            M = new List<List<int>>();
+            N = new List<List<int>>();
         }
 
         public void ReadInput()
         {
             ReadTestCaseCount();
-            ReadDictionaryLength();
-            ReadDictionary();
-            ReadSearchMatrixCount();
-            ReadSearchMatrixes();
+            for (int i = 0; i < T; i++)
+            {
+                ReadDictionaryLength();
+                ReadDictionary(i);
+                ReadSearchMatrixCount();
+                ReadSearchMatrixes(i);
+            }
         }
 
         private void ReadTestCaseCount()
@@ -82,21 +96,29 @@ namespace DueuesQuiz
             string input = Console.ReadLine();
             int value;
             if (int.TryParse(input, out value) && value >= 1 && value <= 15000)
-                D = value;
+                D.Add(value);
             else
                 throw new ArgumentException("The input must be an integer: 1 <= D <= 15,000");
         }
 
-        private void ReadDictionary()
+        private void ReadDictionary(int testCase)
         {
-            for (int i = 0; i < D; i++)
+            for (int i = 0; i < D[testCase]; i++)
             {
                 string word = Console.ReadLine();
                 if (word != null && word.Length > 1000)
                     throw new ArgumentException("Dictionary words must have less than 1000 letters");
 
-                Dictionary.Add(word);
+                AddToDictionary(testCase, word);
             }
+        }
+
+        private void AddToDictionary(int testCase, string word)
+        {
+            if (Dictionary.Count < testCase + 1)
+                Dictionary.Add(new HashSet<string>());
+
+            Dictionary[testCase].Add(word);
         }
 
         private void ReadSearchMatrixCount()
@@ -109,7 +131,7 @@ namespace DueuesQuiz
                 throw new ArgumentException("The input must be an integer: 1 <= Q <= 100");
         }
 
-        private void ReadSearchMatrixes()
+        private void ReadSearchMatrixes(int testCase)
         {
             for (int i = 0; i < Q; i++)
             {
@@ -124,21 +146,26 @@ namespace DueuesQuiz
                     throw new ArgumentException(
                         "The matrix size must be composed of 2 integers separated by ' ': 1 <= M, N <= 100");
 
-                M.Add(int.Parse(inputs[0]));
-                N.Add(int.Parse(inputs[1]));
+                if (M.Count < testCase + 1)
+                    M.Add(new List<int>());
+                M[testCase].Add(int.Parse(inputs[0]));
 
-                ReadSearchMatrix(i);
+                if (N.Count < testCase + 1)
+                    N.Add(new List<int>());
+                N[testCase].Add(int.Parse(inputs[1]));
+
+                ReadSearchMatrix(i, testCase);
             }
         }
 
-        private void ReadSearchMatrix(int matrixIndex)
+        private void ReadSearchMatrix(int matrixIndex, int testCase)
         {
-            char[,] matrix = new char[M[matrixIndex], N[matrixIndex]];
+            char[,] matrix = new char[M[testCase][matrixIndex], N[testCase][matrixIndex]];
 
-            for (int i = 0; i < M[matrixIndex]; i++)
+            for (int i = 0; i < M[testCase][matrixIndex]; i++)
             {
                 string input = Console.ReadLine();
-                if (string.IsNullOrEmpty(input) && input?.Length != N[matrixIndex])
+                if (string.IsNullOrEmpty(input) && input?.Length != N[testCase][matrixIndex])
                     throw new ArgumentException("The informed input is different from the informed value.");
 
                 char[] inputArr = input?.ToCharArray();
@@ -149,7 +176,10 @@ namespace DueuesQuiz
                 }
             }
 
-            SearchMatrix.Add(matrix);
+            if(SearchMatrix.Count < testCase + 1)
+                SearchMatrix.Add(new List<char[,]>());
+
+            SearchMatrix[testCase].Add(matrix);
         }
     }
 
@@ -158,11 +188,11 @@ namespace DueuesQuiz
         public string Value { get; set; }
         public char Key { get; }
         public TrieNode Parent { get; private set; }
-        public List<TrieNode> Children { get; }
+        public HashSet<TrieNode> Children { get; }
 
         public TrieNode()
         {
-            Children = new List<TrieNode>();
+            Children = new HashSet<TrieNode>();
         }
 
         public TrieNode(char key, TrieNode parent = null, string value = "") : this()
@@ -282,7 +312,7 @@ namespace DueuesQuiz
 
                 int navRow = i + 1;
 
-                if(navRow == array.Length)
+                if (navRow == array.Length)
                     node.Value = new string(array);
 
                 ReadNode(navRow, array, node);
@@ -317,7 +347,7 @@ namespace DueuesQuiz
 
             return RootNode.Children.Where(rnode => rnode.Key == wChar).Sum(node => node.Match(word));
         }
-        
+
         public Dictionary<string, int> Match(char[,] searchMatrix)
         {
             Dictionary<string, int> result = new Dictionary<string, int>();
@@ -330,7 +360,7 @@ namespace DueuesQuiz
                     {
                         string match = ReadAndMatch(i, j, iterator, new List<char>(), searchMatrix);
 
-                        if(!string.IsNullOrEmpty(match))
+                        if (!string.IsNullOrEmpty(match))
                             if (result.ContainsKey(match))
                                 result[match]++;
                             else
@@ -355,7 +385,7 @@ namespace DueuesQuiz
                     // Match
                     if (!string.IsNullOrEmpty(node?.Value) && node.Value == new string(currentPrefix.ToArray()))
                         return node.Value;
-                    
+
                     //Not a Match - keep looking
                     return ReadAndMatch(i + iterator[0], j + iterator[1], iterator, currentPrefix, searchMatrix, node);
                 }
